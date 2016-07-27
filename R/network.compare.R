@@ -1,6 +1,6 @@
-#' Creates a network that compares the exporting opportunities of a country in two different years.
+#' Creates a network to compare two years
 #' @export
-#' @return Creates an \code{HTML} file in the working directory with a tree map visualization.
+#' @return Creates an \code{HTML} file with a network visualization that compares two given years.
 #' @param ORIGIN is the country code of origin (e.g. "chl" for Chile)
 #' @param DESTINATION is the country code of origin (e.g. "chn" for China)
 #' @param CLASSIFICATION refers to the trade classification that can be "6" (HS92 6 characters) or "8" (HS92 8 characters) for the year 1995 and going or "4" (SITC rev.2 4 characters) for the year 1962 and ongoing
@@ -61,8 +61,6 @@ network.compare <- function(ORIGIN, DESTINATION, CLASSIFICATION, YEAR1, YEAR2) {
   }
 
   code_lenght = CLASSIFICATION
-  width = 1000
-  height = 600
   if(code_lenght == 4) {
     code_display = "SITC code"
     edges = "edges_sitc.json"
