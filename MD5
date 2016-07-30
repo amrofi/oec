@@ -1,4 +1,4 @@
-14ece11d90d2d1e0cf798a924de4819b *DESCRIPTION
+f98f3ec5da5e0e4328394919ee7f697d *DESCRIPTION
 0e6b25dafe965e212cec8e573b418c0c *LICENSE
 b627313f13aafc34183a3bc416ad6628 *NAMESPACE
 d41aa8af69d6f3f95d090ba6e8881b2f *R/d3plus.R
@@ -8,14 +8,14 @@ d2aa14fb80bd628134cfe752630d9be3 *R/getdata.R
 72aadf816453985ba24179f5e8d8b2ea *R/network.compare.R
 e2ef5c4069da6821f85e04e08f2268dc *R/oec.r
 9972e585b7f47e1d3345e2328048e03b *R/treemap.R
-b56a597611d06d866710bb2824da9a2f *data/countries_list.RData
-44938aac75d99dbb2aa9155f8fec00ab *data/hs92_2char.RData
-722df8d092173abf8c9a4861760fb2ad *data/hs92_6char.RData
-bc4846af52752ba0d940db6105e9eac6 *data/hs92_8char.RData
-1e87314ca681eb7af9cedca4b73cfd96 *data/hs_colors.RData
-2fbc682b195c6645e02513b754ce1f79 *data/sitc_colors.RData
-9a026c49d3a209d87b7a2210e27e2514 *data/sitc_rev2_2char.RData
-65f5c16421da1cbcf685f857aaeb0407 *data/sitc_rev2_4char.RData
+c2f79a23d50e0d1aa836d063c199c3cf *data/countries_list.RData
+dbc08919f7f0369f606db7a5c11bed34 *data/hs92_2char.RData
+e9dad7448df7950baa175dba6d708353 *data/hs92_6char.RData
+d5a0c9bfd596b39724b64e0a2ce058eb *data/hs92_8char.RData
+0283d62f5b8b096a4075e738db4874f5 *data/hs_colors.RData
+4ee670a919aa9f08d431b0cd5914e0db *data/sitc_colors.RData
+fb70d61ee2d810b23e8f829d51e1f04b *data/sitc_rev2_2char.RData
+9122ca27526611ebc5bc55773f7a061a *data/sitc_rev2_4char.RData
 a778ae00017636e90842bbe4ec7406aa *inst/DESCRIPTION
 58fc8dc177ae4f3e2359561d9c2a0b83 *inst/extdata/d3plus.zip
 d8d22c13a07850481e3683abe840be30 *inst/extdata/demo_examples.R
@@ -26,7 +26,7 @@ b43da75ada746f089753c522c0600368 *inst/extdata/network_compare_template.html
 0a5a5d70cd1b19a56c1e5a61bcc0cf90 *inst/extdata/nodes_hs.json
 3ba78d2d765a83c0927c761288e0535b *inst/extdata/nodes_sitc.json
 f313a1f3ee67ad1875bfeb59e106dd5b *inst/extdata/treemap_template.html
-dbaeb1b250be6abd982f4d347a73e273 *man/countries_list.Rd
+2ae71f6402f63bad68a6752f14fd7dab *man/countries_list.Rd
 371a34e8627a541b4c6b00172b13f12b *man/d3plus.Rd
 ec7229166e1f65db129b6612d9a388ec *man/demos.Rd
 e529cc56479201dff32acd89eea1affd *man/getdata.Rd
