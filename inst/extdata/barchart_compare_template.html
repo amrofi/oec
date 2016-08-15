@@ -2,37 +2,27 @@
   <meta charset="utf-8">
     <script src="d3plus/d3.min.js"></script>
     <script src="d3plus/d3plus.min.js"></script>
-          <div id="network"></div>
+          <div id="bar"></div>
           <script>
           var visualization = d3plus.viz()
-          .container("#network")
-          .type("network")
+          .container("#bar")
           .data("json_file")
-          .edges("edges_file")
-          .nodes("nodes_file")
-          .size("export_val")
-          .id(["group","product"])
-          .depth(1)
-          .width(false)
-          .height(false)
+          .type("bar")
+          .width(1000)
+          .height(600)
           .resize(true)
+          .id(["group","product"])
+          .x("year")
+          .y({"stacked":true, "value":"variablecol"})
+          .time("year")
+          .zoom({"value":false})
           .font({"family": "Lato"})
-          .color("color")
-          .title({
-            "total": {
-            "font": {"size": 16},
-            "value": true
-            },
-            "sub": {"font": {"size": 16}}
-           })
-          .legend({"order": {"sort": "desc", "value": "size"}})
-          .tooltip(["product_id","export_val","rca"])
-          .icon({"style": "knockout", "value": "image"})
-          .active({"value": function(d){ return d["rca"] >= 1; }, "spotlight":true})
+          .labels({"align": "left", "valign": "top"})
+          .depth(0)
           .format({
             "text": function(text, params) {
-              if (text === "export_val") {
-                return "Export";
+              if (text === "variablecol") {
+                return "variablename";
               }
               if (text === "product_id") {
                 return "code_display";
@@ -46,7 +36,7 @@
             },
             "number": function(number, params) {
               var formatted = d3plus.number.format(number, params);
-              if (params.key === "export_val") {
+              if (params.key === "variablecol") {
                 return formatted + " USD";
               }
               if (params.key === "product_id") {
@@ -60,6 +50,10 @@
               }
             }
           })
+          .color("color")
+          .legend({"order": {"sort": "desc", "value": "size"}})
+          .tooltip(["product_id","variablecol","rca"])
+          .icon({"style": "knockout", "value": "image"})
           .draw()
           </script>
 <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet" type="text/css">
