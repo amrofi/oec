@@ -10,7 +10,7 @@
 #' @keywords functions
 
 network <- function(origin, destination, classification, year) {
-  d3_folder <- paste0(getwd(), "/d3plus")
+  d3_folder <- paste0(getwd(), "/d3plus-2.0")
   if(!file.exists(d3_folder)){
   print("D3plus not installed... installing using install_d3plus()...")
   install_d3plus()

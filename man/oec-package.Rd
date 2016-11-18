@@ -2,6 +2,7 @@
 % Please edit documentation in R/oec.r
 \docType{package}
 \name{oec-package}
+\alias{oec}
 \alias{oec-package}
 \title{The Observatory of Economic Complexity}
 \description{
@@ -10,7 +11,7 @@ Use The Observatory of Economic Complexity's API from R console to obtain intern
 \details{
 The functions provided within this package are:
 
-\code{\link{install_d3plus}}	Installs D3 and D3plus.
+\code{\link{install_d3plus}}	Installs D3 and D3Plus.
 
 \code{\link{demos}} Copies the demo file.
 
