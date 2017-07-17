@@ -1,16 +1,16 @@
 \name{countries_list}
 \alias{countries_list}
-\title{A list of all the countries}
+\title{Countries list}
 \docType{data}
 \description{
-A list of all the countries in the world and its country code. You need the country code (e.g. chl) to obtain data of a country (e.g Chile)
+A reference to know the country codes to be able to download and import data (e.g. "chl" stands for "Chile" in the OEC's API)
 }
 \usage{countries_list}
 \format{
-  A data frame with 262 observations on the following 2 variables.
+  A data frame with 263 observations on the following 2 variables.
   \describe{
-    \item{\code{country}}{the full names of the countries}
-    \item{\code{country_code}}{the ids of the countries}
+    \item{\code{country}}{Official countries' names spelled according to the United Nations.}
+    \item{\code{country_code}}{Three characters codes to refer to the countries in the OEC's API.}
   }
 }
 \examples{

@@ -1,7 +1,7 @@
 <!doctype html>
   <meta charset="utf-8">
-    <script src="d3plus-2.0/d3.min.js"></script>
-    <script src="d3plus-2.0/d3plus.min.js"></script>
+    <script src="d3plus-1.9.8/d3.min.js"></script>
+    <script src="d3plus-1.9.8/d3plus.min.js"></script>
           <div id="network"></div>
           <script>
           var visualization = d3plus.viz()
@@ -10,35 +10,52 @@
           .data("json_file")
           .edges("edges_file")
           .nodes("nodes_file")
-          .size("export_val")
-          .id(["group","product"])
-          .depth(1)
+          .size("replace_variable")
+          .id("replace_classification")
+          .text("product_name")
           .width(false)
           .height(false)
           .resize(true)
           .font({"family": "Roboto"})
           .color("color")
+          .title("What does replace_origin replace_action replace_dest? (replace_years)")
           .title({
-            "total": {
-            "font": {"size": 16},
-            "value": true
-            },
+            "total": {"value": true},
             "sub": {"font": {"size": 16}}
            })
-          .legend({"order": {"sort": "desc", "value": "size"}})
-          .tooltip(["product_id","export_val","rca"])
-          .icon({"style": "knockout", "value": "image"})
+          .legend({"order": {"sort": "desc", "value": "size"}, "size":32})
+          .tooltip(["product_name","replace_classification","replace_variable","rca","pci","pci_rank","top_exporter","top_importer"])
+          .icon({"style": "knockout", "value": "icon"})
+          replace_timeline
           .active({"value": function(d){ return d["rca"] >= 1; }, "spotlight":true})
           .format({
             "text": function(text, params) {
-              if (text === "export_val") {
-                return "Export";
+              if (text === "replace_variable") {
+                return "replace_name";
               }
-              if (text === "product_id") {
-                return "code_display";
+              if (text === "product_name") {
+                return "Product Name";
+              }
+              if (text === "hs92") {
+                return "HS92 Code";
+              }
+              if (text === "sitc") {
+                return "SITC Code";
               }
               if (text === "rca") {
                 return "RCA";
+              }
+              if (text === "pci") {
+                return "PCI";
+              }
+              if (text === "pci_rank") {
+                return "PCI rank";
+              }
+              if (text === "top_importer") {
+                return "Top importer";
+              }
+              if (text === "top_exporter") {
+                return "Top exporter";
               }
               else {
                 return d3plus.string.title(text, params);
@@ -46,11 +63,8 @@
             },
             "number": function(number, params) {
               var formatted = d3plus.number.format(number, params);
-              if (params.key === "export_val") {
+              if (params.key === "replace_variable") {
                 return formatted + " USD";
-              }
-              if (params.key === "product_id") {
-                return d3.round(number,0);
               }
               if (params.key === "rca") {
                 return d3.round(number,2);

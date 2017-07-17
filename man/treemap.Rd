@@ -4,18 +4,18 @@
 \alias{treemap}
 \title{Creates a treemap for a given year}
 \usage{
-treemap(origin, destination, variable, classification, year, depth)
+treemap(origin, dest, variable, year, classification, depth)
 }
 \arguments{
 \item{origin}{is the country code of origin (e.g. "chl" for Chile)}
 
-\item{destination}{is the country code of origin (e.g. "chn" for China)}
+\item{dest}{is the country code of destination (e.g. "chn" for China)}
 
 \item{variable}{is the variable to visualize and it can be "imports", "exports" or "exchange" (trade exchange)}
 
-\item{classification}{refers to the trade classification that can be "6" (HS92 6 characters) or "8" (HS92 8 characters) for the year 1995 and going or "4" (SITC rev.2 4 characters) for the year 1962 and ongoing}
-
 \item{year}{is the year and the OEC's API ranges from 1962 to 2014}
+
+\item{classification}{Trade classification that can be "1" (HS92 4 charactersacters since year 1995), "2" (SITC rev.3 4 charactersacters since year 1962) or "3" (HS92 6 charactersacters since year 1995)}
 
 \item{depth}{is an optional parameter that can take values "0" (group's detail) or "1" (product's detail)}
 }
@@ -26,7 +26,12 @@ Creates an \code{HTML} file with a treemap visualization for a given year.
 Creates a treemap for a given year
 }
 \examples{
-treemap("chl", "chn", "exports", 6, 2014)
+# Run countries_list() to display the full list of countries
+# For the example Chile is "chl" and China is "chn"
+
+# What does Chile export to China?
+# Year 2015 (HS92 4 characters)
+# treemap("chl", "chn", "exports", 2015)
+# treemap("chl", "chn", "exports", 2015, 1) # equivalent to last command
 }
 \keyword{functions}
-

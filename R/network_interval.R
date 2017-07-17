@@ -1,23 +1,23 @@
-#' Creates a network of exports for a given year
+#' Creates a network of exports for a given period of years
 #' @export
-#' @return Creates an \code{HTML} file with a network visualization for a given year.
+#' @return Creates an \code{HTML} file with a network visualization for a given given period of years.
 #' @param origin is the country code of origin (e.g. "chl" for Chile)
 #' @param dest is the country code of destination (e.g. "chn" for China)
-#' @param year is the year and the OEC's API ranges from 1962 to 2014
+#' @param initial_year is the initial year and the OEC's API ranges from 1942 to 2014
+#' @param final_year is the final year and the OEC's API ranges from 1942 to 2014
 #' @param classification Trade classification that can be "1" (HS92 4 characters since year 1995) or "2" (SITC rev.2 4 characters since year 1962)
-#' @examples
+#' @param interval is an optional parameter to define the distance between years (by default set to 1)
+#' #' @examples
 #' # Run countries_list() to display the full list of countries
 #' # For the example Chile is "chl" and China is "chn"
 #'
 #' # What are the export opportunities of Chile?
-#' # Year 2015, trade with China (HS92 4 characters)
-#' # network("chl", "chn", 2015)
-#' # network("chl", "chn", 2015, 1) # equivalent to last command
+#' # Years 2010-2015, trade with China (HS92 4 characters)
+#' # network_interval("chl", "chn", 2010, 2015)
+#' # network_interval("chl", "chn", 2010, 2015, 1, 1) # equivalent to last command
 #' @keywords functions
 
-globalVariables(".")
-
-network = function(origin, dest, year, classification) {
+network_interval = function(origin, dest, initial_year, final_year, classification, interval) {
 
   d3_folder = paste0(getwd(), "/d3plus-1.9.8")
   if(!file.exists(d3_folder)){
@@ -25,12 +25,14 @@ network = function(origin, dest, year, classification) {
     install_d3plus()
   }
 
+  if(missing(interval)) {interval = 1}
+
   if(missing(classification)) {classification = 1}
 
   # the OEC website only displays exports networks so "exports" will be a fixed parameter
   variable = "exports"
 
-  getdata(origin, dest, year, classification)
+  getdata_interval(origin, dest, initial_year, final_year, classification, interval)
 
   if(classification == 1) {
     classification = "hs92"
@@ -65,13 +67,13 @@ network = function(origin, dest, year, classification) {
       }
     } else {
       if(classification != 1 | classification != 2) {
-        print('Error: network() only admits 4 characters codes (HS92 or SITC rev.2).')
+        print('Error: network_interval() only admits 4 characters codes (HS92 or SITC rev.2).')
         stop()
       }
     }
   }
 
-  input = paste(origin, dest, year, classification, characters, sep = "_")
+  input = paste(origin, dest, initial_year, final_year, interval, classification, characters, sep = "_")
 
   replacement_variable = "export_val"
   replacement_name = "Export"
@@ -95,12 +97,12 @@ network = function(origin, dest, year, classification) {
         gsub("code_display", code_display, .) %>%
         gsub("replace_origin", countries_list[countries_list$country_code == origin, 1], .) %>%
         gsub("replace_dest", countries_list[countries_list$country_code == dest, 1], .) %>%
-        gsub("replace_years", year, .) %>%
-        gsub("replace_timeline", " ", .)
+        gsub("replace_years", paste0(initial_year," - ",final_year), .) %>%
+        gsub("replace_timeline", paste0('.time({"value": "year", "solo":', initial_year, '})'), .)
 
       network_template = ifelse(variable == "exports", gsub("replace_action", "export to", network_template),
-                                 ifelse(variable == "imports", gsub("replace_action", "import from", network_template),
-                                        "exchange with"))
+                                ifelse(variable == "imports", gsub("replace_action", "import from", network_template),
+                                       "exchange with"))
 
       print("Writing HTML file...")
       writeLines(network_template, paste0(output, "_network_exports", ".html"))
