@@ -1,3 +1,5 @@
+globalVariables(".")
+
 #' Creates a network of exports for a given year
 #' @export
 #' @return Creates an \code{HTML} file with a network visualization for a given year.
@@ -15,13 +17,11 @@
 #' # network("chl", "chn", 2015, 1) # equivalent to last command
 #' @keywords functions
 
-globalVariables(".")
-
 network = function(origin, dest, year, classification) {
 
   d3_folder = paste0(getwd(), "/d3plus-1.9.8")
   if(!file.exists(d3_folder)){
-    print("D3plus not installed. Installing...")
+    print("D3plus was not found in your working directory. Copying files...")
     install_d3plus()
   }
 

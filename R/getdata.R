@@ -1,9 +1,13 @@
+globalVariables(c("export_val","import_val","sitc_id","origin_id","dest_id","country","sitc",
+                  "group_id","product_name","hs92_id_len","hs92_id","origin_name","dest_name",
+                  "origin_total_export_val","world_total_export_val","rca","sitc_id_len","top_importer","top_exporter"))
+
 #' Downloads and processes the data from the API
 #' @export
 #' @param origin Country code of origin (e.g. "chl" for Chile)
 #' @param dest Country code of destination (e.g. "chn" for China)
 #' @param classification Trade classification that can be "1" (HS92 4 characters since year 1995), "2" (SITC rev.2 4 characters since year 1962) or "3" (HS92 6 characters since year 1995)
-#' @param year The OEC's API ranges from 1962 to 2015
+#' @param year The OEC's API ranges from 1962 to 2016
 #' @import dplyr curl
 #' @importFrom readr write_csv
 #' @importFrom jsonlite fromJSON write_json
@@ -13,22 +17,18 @@
 #' # For the example Chile is "chl" and China is "chn"
 #'
 #' # Download trade between Chile and China
-#' # Year 2015 (HS92 4 characters)
-#' # getdata("chl", "chn", 2014)
-#' # getdata("chl", "chn", 2014, 1) # equivalent to last command
+#' # Year 2016 (HS92 4 characters)
+#' # getdata("chl", "chn", 2016)
+#' # getdata("chl", "chn", 2016, 1) # equivalent to last command
 #'
 #' # Download trade between Chile and China
-#' # Year 2015 (SITC rev2 4 characters)
-#' # getdata("chl", "chn", 2015, 2)
+#' # Year 2016 (SITC rev2 4 characters)
+#' # getdata("chl", "chn", 2016, 2)
 #'
 #' # Download trade between Chile and China
-#' # Year 2015 (HS92 6 characters)
-#' # getdata("chl", "chn", 2015, 3)
+#' # Year 2016 (HS92 6 characters)
+#' # getdata("chl", "chn", 2016, 3)
 #' @keywords functions
-
-globalVariables(c("export_val","import_val","sitc_id","origin_id","dest_id","country","sitc",
-                  "group_id","product_name","hs92_id_len","hs92_id","origin_name","dest_name",
-                  "origin_total_export_val","world_total_export_val","rca","sitc_id_len","top_importer","top_exporter"))
 
 getdata = function(origin, dest, year, classification) {
   
@@ -41,8 +41,8 @@ getdata = function(origin, dest, year, classification) {
     stop()
   }
   
-  if(year < 1961 | year > 2015) {
-    print("The data is only available from 1962 to 2015.")
+  if(year < 1961 | year > 2016) {
+    print("The data is only available from 1962 to 2016.")
     stop()
   } else {
     if((classification == 1 | classification == 3) & year < 1995) {
@@ -74,7 +74,7 @@ getdata = function(origin, dest, year, classification) {
           if(!file.exists(paste0(output,".csv")) | !file.exists(paste0(output,".json"))) {
             print(paste0("Processing SITC rev.2 (",characters," characters) files..."))
             
-            origin_dest_year = fromJSON(paste("http://atlas.media.mit.edu/sitc/export", year, origin, dest, "show/", sep = "/"))
+            origin_dest_year = fromJSON(paste("https://atlas.media.mit.edu/sitc/export", year, origin, dest, "show/", sep = "/"))
             origin_dest_year = as_tibble(origin_dest_year[[1]])
             
             origin_dest_year = origin_dest_year %>%
@@ -88,7 +88,7 @@ getdata = function(origin, dest, year, classification) {
               left_join(countries_list, by = c("dest_id" = "country_code")) %>%
               rename(dest_name = country)
             
-            world_world_year = fromJSON(paste("http://atlas.media.mit.edu/sitc/export", year, "all/all/show/", sep = "/"))
+            world_world_year = fromJSON(paste("https://atlas.media.mit.edu/sitc/export", year, "all/all/show/", sep = "/"))
             world_world_year = as_tibble(world_world_year[[1]])
             
             world_world_year = world_world_year %>%
@@ -98,7 +98,7 @@ getdata = function(origin, dest, year, classification) {
               mutate(sitc = substr(id,3,6)) %>%
               select(sitc,contains("world_total_"),contains("pci"),contains("top_"))
             
-            origin_world_year = fromJSON(paste("http://atlas.media.mit.edu/sitc/export", year, origin, "all/show/", sep = "/"))
+            origin_world_year = fromJSON(paste("https://atlas.media.mit.edu/sitc/export", year, origin, "all/show/", sep = "/"))
             origin_world_year = as_tibble(origin_world_year[[1]])
             
             origin_world_year = origin_world_year %>%
@@ -160,7 +160,7 @@ getdata = function(origin, dest, year, classification) {
             if(!file.exists(paste0(output,".csv")) | !file.exists(paste0(output,".json"))) {
               print(paste0("Processing HS92 (",characters," characters) files..."))
               
-              origin_dest_year = fromJSON(paste("http://atlas.media.mit.edu/hs92/export", year, origin, dest, "show/", sep = "/"))
+              origin_dest_year = fromJSON(paste("https://atlas.media.mit.edu/hs92/export", year, origin, dest, "show/", sep = "/"))
               origin_dest_year = as_tibble(origin_dest_year[[1]])
               
               origin_dest_year = origin_dest_year %>%
@@ -175,7 +175,7 @@ getdata = function(origin, dest, year, classification) {
                 left_join(countries_list, by = c("dest_id" = "country_code")) %>%
                 rename(dest_name = country)
               
-              world_world_year = fromJSON(paste("http://atlas.media.mit.edu/hs92/export", year, "all/all/show/", sep = "/"))
+              world_world_year = fromJSON(paste("https://atlas.media.mit.edu/hs92/export", year, "all/all/show/", sep = "/"))
               world_world_year = as_tibble(world_world_year[[1]])
               
               world_world_year = world_world_year %>%
@@ -186,7 +186,7 @@ getdata = function(origin, dest, year, classification) {
                 mutate(hs92 = substr(id,3,characters + 2)) %>%
                 select(hs92,contains("world_total_"),contains("pci"),contains("top_"))
               
-              origin_world_year = fromJSON(paste("http://atlas.media.mit.edu/hs92/export", year, origin, "all/show/", sep = "/"))
+              origin_world_year = fromJSON(paste("https://atlas.media.mit.edu/hs92/export", year, origin, "all/show/", sep = "/"))
               origin_world_year = as_tibble(origin_world_year[[1]])
               
               origin_world_year = origin_world_year %>%
@@ -250,7 +250,7 @@ getdata = function(origin, dest, year, classification) {
           }
         }
       } else {
-        print('Error. The worldowed classifications can be "1" (HS92 4 characters) or "3" (HS92 6 characters) for the year 1995 and going or "2" (SITC rev.2 4 characters) for the year 1962 and ongoing.')
+        print('Error. The trade classifications can be "1" (HS92 4 characters) or "3" (HS92 6 characters) for the year 1995 and going or "2" (SITC rev.2 4 characters) for the year 1962 and ongoing.')
         stop()
       }
     }

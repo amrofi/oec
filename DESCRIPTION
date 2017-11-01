@@ -2,8 +2,8 @@ Package: oec
 Type: Package
 Title: Observatory of Economic Complexity API Wrapper and Utility
         Program
-Version: 2.4
-Date: 2017-07-17
+Version: 2.5
+Date: 2017-11-01
 Author: Cesar A. Hidalgo [aut],
   Alexander Simoes [aut],
   Mauricio Vargas S. [aut, cre],
@@ -20,9 +20,9 @@ URL: http://atlas.media.mit.edu/en/
 Description: Access The Observatory of Economic Complexity API from R to download international trade data and create and D3Plus visualizations.
 License: MIT + file LICENSE
 LazyData: TRUE
-Depends: curl, dplyr, jsonlite, readr, servr
+Depends: curl, dplyr, jsonlite, readr, servr, R (>= 2.10)
 RoxygenNote: 6.0.1
 NeedsCompilation: no
-Packaged: 2017-07-17 22:35:47 UTC; pacha
+Packaged: 2017-11-01 19:00:34 UTC; pacha
 Repository: CRAN
-Date/Publication: 2017-07-17 22:52:49 UTC
+Date/Publication: 2017-11-01 19:20:05 UTC
