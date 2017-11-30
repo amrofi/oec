@@ -1,8 +1,8 @@
-7d478b63dd4abc4f601a4d8365d353a0 *DESCRIPTION
+a989f25255222732c601970f70882325 *DESCRIPTION
 10844e158ff5abd6b63039028db2ccf2 *LICENSE
-310b6c3cd8a204187fc9293980be7981 *NAMESPACE
+247cb97f4b37bb8e889a81736359fd27 *NAMESPACE
 28119d6f4e3f6a448a0e288f404fc708 *R/demos.R
-05af3ded6e18fa23c58d25c8cc22c86b *R/getdata.R
+40cad932b63cb6cfbe64bafc21190b1e *R/getdata.R
 d9e0d1889c4b54527dc6ac243b6bac71 *R/getdata_interval.R
 c12a57dfe3b2f15117868c9b5f53edd6 *R/install_d3plus.R
 cf6fa99b4e1af833f8d3422813fcb95a *R/network.R
@@ -10,11 +10,15 @@ cf6fa99b4e1af833f8d3422813fcb95a *R/network.R
 e4d08f776cfcd61c2018227535202e99 *R/oec.r
 2958513b92864c64a21d18e3319f1712 *R/treemap.R
 5932a7146334a7a7dc1131ae74913003 *R/treemap_interval.R
-d40e529e4f3103199328d661c8e3c179 *data/countries_list.RData
-1988a0a443647a5ec4f53a6181c1f938 *data/hs92.RData
-e483c31a5cdb85652924642226166a65 *data/sitc.RData
+6c86bedef7d0f98b4396385023de7c0f *build/vignette.rds
+89da5db1655e9061df366d35c5ae46c3 *data/countries_list.RData
+cac38f7ac6cda42e69ccf0eb5904a14c *data/hs92.RData
+9bd8051258472aa0cb51cf61444bf4e2 *data/sitc.RData
+6c04214d29c64f110bfa90f0dc436053 *inst/doc/complete-user-guide.R
+16c20965bbe5d4d02d1749b747825195 *inst/doc/complete-user-guide.Rmd
+9802e56b6a8b6fad724af105b55c8e4b *inst/doc/complete-user-guide.html
 b434437c5260eae53ccadf6ef17ff7d7 *inst/extdata/d3plus-1.9.8.zip
-91a8ba22a4fb96877e378f97cd055859 *inst/extdata/demo_examples.R
+13551cd404cfb8e6234690269f508f83 *inst/extdata/demo_examples.R
 72e7c71c147e96d29a0574f3f76b153b *inst/extdata/edges_hs92_4.json
 0319da563d9c760f3476d93bbf738250 *inst/extdata/edges_sitc_4.json
 bc8b888609b302d03b2733d0f72afd31 *inst/extdata/network_template.html
@@ -40,3 +44,4 @@ e2189e6f67326273a97fb82ee87fd826 *man/oec-package.Rd
 c9fd0b7b2cbc40ec42e666eaa5b001ab *man/treemap.Rd
 c3edab2ba9da176f6aca56335b0270ac *man/treemap_interval.Rd
 9dc4b42ef6f299d419280d3eb82e0202 *man/treemap_template.html.Rd
+16c20965bbe5d4d02d1749b747825195 *vignettes/complete-user-guide.Rmd
