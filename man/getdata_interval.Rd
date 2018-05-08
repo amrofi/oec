@@ -2,45 +2,37 @@
 % Please edit documentation in R/getdata_interval.R
 \name{getdata_interval}
 \alias{getdata_interval}
-\title{Downloads and processes the data from the API}
+\title{Convenient wrapper for getdata}
 \usage{
-getdata_interval(origin, dest, initial_year, final_year, classification,
-  interval)
+getdata_interval(origin, destination, initial_year, final_year, classification,
+  interval, write)
 }
 \arguments{
-\item{origin}{Country code of origin (e.g. "chl" for Chile)}
+\item{origin}{ISO code for country of origin (e.g. \code{chl} for Chile). Run \code{countries_list} in case of doubt.}
 
-\item{dest}{Country code of destination (e.g. "chn" for China)}
+\item{destination}{ISO code for country of destination (e.g. \code{chn} for China). Run \code{countries_list} in case of doubt.}
 
-\item{initial_year}{The OEC's API ranges from 1942 to 2016. This needs to be lower than `final_year`}
+\item{initial_year}{The OEC's API ranges from 1962 to 2016. This needs to be lower than `final_year`.}
 
-\item{final_year}{The OEC's API ranges from 1942 to 2016. This needs to be greater than `initial_year`}
+\item{final_year}{The OEC's API ranges from 1962 to 2016. This needs to be greater than `initial_year`.}
 
-\item{classification}{Trade classification that can be "1" (HS92 4 characters since year 1995), "2" (SITC rev.2 4 characters since year 1962) or "3" (HS92 6 characters since year 1995)}
+\item{classification}{Trade classification that can be \code{1} (HS92 4 characters since year 1995), 
+\code{2} (SITC rev.2 4 characters since year 1962) or 
+\code{3} (HS92 6 characters since year 1995). By default set to \code{1}.}
 
 \item{interval}{is an optional parameter to define the distance between years (by default set to 1)}
+
+\item{write}{Write to user's filespace (by default set to \code{FALSE})}
 }
 \description{
-Downloads and processes the data from the API
+Convenient wrapper for getdata
 }
 \examples{
-# Run countries_list() to display the full list of countries
-# For the example Chile is "chl" and China is "chn"
-# Download trade between Chile and China
-# Years 2010-2016 (HS92 4 characters)
-# getdata_interval("chl", "chn", 2010, 2016)
-# getdata_interval("chl", "chn", 2010, 2016, 1, 1) # equivalent to last command
+\dontrun{
+# Run `countries_list` to display the full list of countries
+# What does Chile export to Peru? years 2000 to 2015 - classification HS92 6 characters
+getdata_interval("chl", "chn", 2000, 2015, 3)
+}
 
-# Download trade between Chile and China
-# Years 2010, 2012 and 2014 from OEC's API (HS92 4 characters)
-# getdata_interval("chl", "chn", 2010, 2014, 1, 2)
-
-# Download trade between Chile and China
-# Years 2010, 2012 and 2014 from OEC's API (SITC rev2 4 characters)
-# getdata_interval("chl", "chn", 2010, 2014, 2, 2)
-
-# Download trade between Chile and China
-# Years 2010, 2012 and 2014 from OEC's API (HS92 6 characters)
-# getdata_interval("chl", "chn", 2010, 2014, 3, 2)
 }
 \keyword{functions}

@@ -1,337 +1,500 @@
-globalVariables(c("id","export_val","import_val","sitc_id","origin_id","dest_id","country","sitc",
-                  "group_id","product_name","hs92_id_len","hs92_id","origin_name","dest_name",
-                  "origin_total_export_val","world_total_export_val","rca","sitc_id_len","top_importer","top_exporter"))
-
 #' Downloads and processes the data from the API
 #' @export
-#' @param origin Country code of origin (e.g. "chl" for Chile)
-#' @param dest Country code of destination (e.g. "chn" for China)
-#' @param classification Trade classification that can be "1" (HS92 4 characters since year 1995), "2" (SITC rev.2 4 characters since year 1962) or "3" (HS92 6 characters since year 1995)
+#' @param origin ISO code for country of origin (e.g. \code{chl} for Chile). Run \code{countries_list} in case of doubt.
+#' @param destination ISO code for country of destination (e.g. \code{chn} for China). Run \code{countries_list} in case of doubt.
 #' @param year The OEC's API ranges from 1962 to 2016
-#' @importFrom magrittr %>%
-#' @importFrom dplyr as_tibble select filter mutate rename contains everything left_join bind_rows
-#' @importFrom readr write_csv
-#' @importFrom jsonlite fromJSON write_json
-#' @importFrom servr httw
+#' @param classification Trade classification that can be \code{1} (HS92 4 characters since year 1995), 
+#'     \code{2} (SITC rev.2 4 characters since year 1962) or 
+#'     \code{3} (HS92 6 characters since year 1995). By default set to \code{1}.
+#' @param write Write to user's filespace (by default set to \code{FALSE})
+#' @param wrapper Argument used by \code{getdata_interval} (by default set to \code{FALSE})
 #' @examples
-#' # Run countries_list() to display the full list of countries
-#' # For the example Chile is "chl" and China is "chn"
-#'
-#' # Download trade between Chile and China
-#' # Year 2016 (HS92 4 characters)
-#' # getdata("chl", "chn", 2016)
-#' # getdata("chl", "chn", 2016, 1) # equivalent to last command
-#'
-#' # Download trade between Chile and China
-#' # Year 2016 (SITC rev2 4 characters)
-#' # getdata("chl", "chn", 2016, 2)
-#'
-#' # Download trade between Chile and China
-#' # Year 2016 (HS92 6 characters)
-#' # getdata("chl", "chn", 2016, 3)
+#' \dontrun{
+#' # Run `countries_list` to display the full list of countries
+#' # What does Chile export to China?  year 2015 - classification HS92 6 characters
+#' getdata("chl", "chn", 2015, 3)
+#' }
+#' 
 #' @keywords functions
 
-getdata = function(origin, dest, year, classification) {
+getdata <- function(origin, destination, year, classification, write, wrapper) {
+  if (missing(classification)) { classification <- 1 }
+  if (missing(write)) { write <- FALSE }
+  if (missing(wrapper)) { wrapper <- FALSE }
   
-  if(missing(classification)) {classification = 1}
-  
-  if(origin %in% countries_list$country_code & dest %in% countries_list$country_code){
-    print("Valid country codes. Proceeding...")
+  if (origin %in% countries_list$country_code & 
+      destination %in% countries_list$country_code) {
+    message("Valid country codes. Proceeding...")
   } else {
-    print("Error. Invalid country codes, see 'countries_list'.")
-    stop()
+    stop("Invalid country codes, see `countries_list`.")
   }
   
-  if(year < 1961 | year > 2016) {
-    print("The data is only available from 1962 to 2016.")
-    stop()
+  if (year < 1961 | year > 2016) {
+    stop("The data is only available from 1962 to 2016.")
   } else {
-    if((classification == 1 | classification == 3) & year < 1995) {
-      print("HS92 classification is only available from the year 1995 and ongoing.")
-      stop()
+    if ((classification == 1 | classification == 3) & year < 1995) {
+      stop("HS92 classification is only available from the year 1995 and ongoing.")
     } else {
-      if(classification == 1 | classification == 2 | classification == 3){
-        if(classification == 1){
-          classification = "hs92"
-          characters = 4
-          print("Using HS92 classification (4 characters)...")
+      if (classification == 1 |
+          classification == 2 | 
+          classification == 3) {
+        if (classification == 1) {
+          classification <- "hs92"
+          characters <- 4
+          message("Using HS92 classification (4 characters)...")
         }
-        if(classification == 2){
-          classification = "sitc"
-          characters = 4
-          print("Using SITC rev.2 classification (4 characters)...")
+        if (classification == 2) {
+          classification <- "sitc"
+          characters <- 4
+          message("Using SITC rev.2 classification (4 characters)...")
         }
-        if(classification == 3) {
-          classification = "hs92"
-          characters = 6
-          print("Using HS92 classification (6 characters)")
+        if (classification == 3) {
+          classification <- "hs92"
+          characters <- 6
+          message("Using HS92 classification (6 characters)")
         }
       }
       
-      output = paste(origin, dest, year, classification, characters, sep = "_")
+      output <- paste(origin, destination, year, classification, characters, sep = "_")
       
-      if(classification == "sitc" | classification == "hs92") {
-        if(classification == "sitc") {
-          if(!file.exists(paste0(output,".csv")) | !file.exists(paste0(output,".json"))) {
-            print(paste0("Processing SITC rev.2 (",characters," characters) files..."))
+      if (classification == "sitc" | classification == "hs92") {
+        
+        if (classification == "sitc") { sitc <- oec::sitc }
+        if (classification == "hs92") { hs92 <- oec::hs92 }
+        
+        if (!exists(output)) {
+          message("Processing data...")
+          
+          # product origin-destination data -----------------------------------------
+          
+          origin_destination_year <- fromJSON(
+            sprintf(
+              "https://atlas.media.mit.edu/%s/export/%s/%s/%s/show/",
+              classification,
+              year,
+              origin,
+              destination
+            )
+          )
+          
+          origin_destination_year <- as_tibble(origin_destination_year[[1]])
+          
+          if (nrow(origin_destination_year) == 0) { 
+            stop("No data available. Try changing year or trade classification.") 
+          }
+          
+          if (origin != "all" & destination != "all") {
+            origin_destination_year <- origin_destination_year %>%
+              rename(destination_id = !!sym("dest_id")) %>% 
+              mutate(trade_exchange_val = 
+                       !!sym("export_val") + !!sym("import_val"))
             
-            origin_dest_year = fromJSON(paste("https://atlas.media.mit.edu/sitc/export", year, origin, dest, "show/", sep = "/"))
-            origin_dest_year = as_tibble(origin_dest_year[[1]])
-            
-            if(origin != "all" & dest != "all") {
-              origin_dest_year = origin_dest_year %>%
-                mutate(trade_exchange_val = export_val + import_val) %>%
-                rename(id = sitc_id) %>%
-                mutate(sitc = substr(id,3,6)) %>%
-                mutate(origin_id = substr(origin_id,3,5),
-                       dest_id = substr(dest_id,3,5)) %>%
-                left_join(countries_list, by = c("origin_id" = "country_code")) %>%
-                rename(origin_name = country) %>%
-                left_join(countries_list, by = c("dest_id" = "country_code")) %>%
-                rename(dest_name = country)
-            }
-            if(origin != "all" & dest == "all") {
-              origin_dest_year = origin_dest_year %>%
-                mutate(trade_exchange_val = export_val + import_val) %>%
-                rename(id = sitc_id) %>%
-                mutate(sitc = substr(id,3,6)) %>%
-                mutate(origin_id = substr(origin_id,3,5),
-                       dest_id = "all") %>%
-                left_join(countries_list, by = c("origin_id" = "country_code")) %>%
-                rename(origin_name = country) %>%
-                left_join(countries_list, by = c("dest_id" = "country_code")) %>%
-                rename(dest_name = country)
-            }
-            if(origin == "all" & dest != "all") {
-              origin_dest_year = origin_dest_year %>%
-                mutate(trade_exchange_val = export_val + import_val) %>%
-                rename(id = sitc_id) %>%
-                mutate(sitc = substr(id,3,6)) %>%
-                mutate(origin_id = "all",
-                       dest_id = substr(dest_id,3,5)) %>%
-                left_join(countries_list, by = c("origin_id" = "country_code")) %>%
-                rename(origin_name = country) %>%
-                left_join(countries_list, by = c("dest_id" = "country_code")) %>%
-                rename(dest_name = country)
-            }
-            if(origin == "all" & dest == "all") {
-              origin_dest_year = origin_dest_year %>%
-                mutate(trade_exchange_val = export_val + import_val) %>%
-                rename(id = sitc_id) %>%
-                mutate(sitc = "all") %>%
-                mutate(origin_id = "all",
-                       dest_id = substr(dest_id,3,5)) %>%
-                left_join(countries_list, by = c("origin_id" = "country_code")) %>%
-                rename(origin_name = country) %>%
-                left_join(countries_list, by = c("dest_id" = "country_code")) %>%
-                rename(dest_name = country)
+            if (classification == "sitc") {
+              origin_destination_year <- origin_destination_year %>% 
+                rename(id = !!sym("sitc_id")) %>% 
+                mutate(
+                  sitc = substr(!!sym("id"), 3, 6)
+                )
+            } else {
+              if (characters == 4) {
+                origin_destination_year <- origin_destination_year %>% 
+                  rename(id = !!sym("hs92_id")) %>% 
+                  mutate(
+                    hs92 = substr(!!sym("id"), 3, 6)
+                  )
+              } else {
+                origin_destination_year <- origin_destination_year %>% 
+                  rename(id = !!sym("hs92_id")) %>% 
+                  mutate(
+                    hs92 = substr(!!sym("id"), 3, 8)
+                  )
+              }
             }
             
-            world_world_year = fromJSON(paste("https://atlas.media.mit.edu/sitc/export", year, "all/all/show/", sep = "/"))
-            world_world_year = as_tibble(world_world_year[[1]])
+            origin_destination_year <- origin_destination_year %>% 
+              mutate(
+                origin_id = substr(!!sym("origin_id"), 3, 5),
+                destination_id = substr(!!sym("destination_id"), 3, 5)
+              ) %>%
+              left_join(
+                countries_list,
+                by = c("origin_id" = "country_code")
+              ) %>%
+              rename(origin_name = !!sym("country")) %>%
+              left_join(
+                countries_list, 
+                by = c("destination_id" = "country_code")
+              ) %>%
+              rename(destination_name = !!sym("country"))
+          }
+          
+          if (origin != "all" & destination == "all") {
+            origin_destination_year <- origin_destination_year %>%
+              mutate(trade_exchange_val = 
+                       !!sym("export_val") + !!sym("import_val"))
             
-            world_world_year = world_world_year %>%
-              rename(id = sitc_id) %>%
-              rename(world_total_export_val = export_val,
-                     world_total_import_val = import_val) %>%
-              mutate(sitc = substr(id,3,6)) %>%
-              select(sitc,contains("world_total_"),contains("pci"),contains("top_"))
+            if (classification == "sitc") {
+              origin_destination_year <- origin_destination_year %>% 
+                rename(id = !!sym("sitc_id")) %>% 
+                mutate(
+                  sitc = substr(!!sym("id"), 3, 6)
+                )
+            } else {
+              if (characters == 4) {
+                origin_destination_year <- origin_destination_year %>% 
+                  rename(id = !!sym("hs92_id")) %>% 
+                  mutate(
+                    hs92 = substr(!!sym("id"), 3, 6)
+                  )
+              } else {
+                origin_destination_year <- origin_destination_year %>% 
+                  rename(id = !!sym("hs92_id")) %>% 
+                  mutate(
+                    hs92 = substr(!!sym("id"), 3, 8)
+                  )
+              }
+            }
             
-            origin_world_year = fromJSON(paste("https://atlas.media.mit.edu/sitc/export", year, origin, "all/show/", sep = "/"))
-            origin_world_year = as_tibble(origin_world_year[[1]])
+            origin_destination_year <- origin_destination_year %>% 
+              mutate(
+                origin_id = substr(!!sym("origin_id"), 3, 5),
+                destination_id = "all"
+              ) %>%
+              left_join(
+                countries_list,
+                by = c("origin_id" = "country_code")
+              ) %>%
+              rename(origin_name = !!sym("country")) %>%
+              left_join(
+                countries_list, 
+                by = c("destination_id" = "country_code")
+              ) %>%
+              rename(destination_name = !!sym("country"))
+          }
+          
+          if (origin == "all" & destination != "all") {
+            origin_destination_year <- origin_destination_year %>%
+              mutate(trade_exchange_val = 
+                       !!sym("export_val") + !!sym("import_val"))
             
-            origin_world_year = origin_world_year %>%
-              select(export_val,sitc_id) %>%
-              rename(origin_total_export_val = export_val) %>%
-              rename(id = sitc_id) %>%
-              mutate(sitc = substr(id,3,6)) %>%
-              select(-id)
+            if (classification == "sitc") {
+              origin_destination_year <- origin_destination_year %>% 
+                rename(id = !!sym("sitc_id")) %>% 
+                mutate(
+                  sitc = substr(!!sym("id"), 3, 6)
+                )
+            } else {
+              if (characters == 4) {
+                origin_destination_year <- origin_destination_year %>% 
+                  rename(id = !!sym("hs92_id")) %>% 
+                  mutate(
+                    hs92 = substr(!!sym("id"), 3, 6)
+                  )
+              } else {
+                origin_destination_year <- origin_destination_year %>% 
+                  rename(id = !!sym("hs92_id")) %>% 
+                  mutate(
+                    hs92 = substr(!!sym("id"), 3, 8)
+                  )
+              }
+            }
             
-            origin_dest_year = origin_dest_year %>%
-              left_join(world_world_year, by = "sitc") %>%
-              left_join(origin_world_year, by = "sitc") %>%
-              mutate(rca = (origin_total_export_val/sum(origin_total_export_val, na.rm=TRUE))/(world_total_export_val/sum(world_total_export_val, na.rm=TRUE)),
-                     rca = round(rca,3)) %>%
-              select(year,origin_id,dest_id,id,sitc,contains("export_"),contains("import_"),everything()) %>%
-              select(-sitc_id_len)
+            origin_destination_year <- origin_destination_year %>% 
+              mutate(
+                origin_id = "all",
+                destination_id = substr(!!sym("destination_id"), 3, 5)
+              ) %>%
+              left_join(countries_list,
+                        by = c("origin_id" = "country_code")) %>%
+              rename(origin_name = !!sym("country")) %>%
+              left_join(
+                countries_list, 
+                by = c("destination_id" = "country_code")
+              ) %>%
+              rename(destination_name = !!sym("country"))
+          }
+          
+          if (origin == "all" & destination == "all") {
+            origin_destination_year <- origin_destination_year %>%
+              mutate(trade_exchange_val = 
+                       !!sym("export_val") + !!sym("import_val"))
             
-            rm(world_world_year,origin_world_year)
+            if (classification == "sitc") {
+              origin_destination_year <- origin_destination_year %>% 
+                rename(id = !!sym("sitc_id")) %>% 
+                mutate(
+                  sitc = substr(!!sym("id"), 3, 6)
+                )
+            } else {
+              if (characters == 4) {
+                origin_destination_year <- origin_destination_year %>% 
+                  rename(id = !!sym("hs92_id")) %>% 
+                  mutate(
+                    hs92 = substr(!!sym("id"), 3, 6)
+                  )
+              } else {
+                origin_destination_year <- origin_destination_year %>% 
+                  rename(id = !!sym("hs92_id")) %>% 
+                  mutate(
+                    hs92 = substr(!!sym("id"), 3, 8)
+                  )
+              }
+            }
             
-            names(countries_list) = c("top_importer","top_importer_code")
-            
-            origin_dest_year = origin_dest_year %>%
-              mutate(top_importer_code = substr(top_importer, 3, 5)) %>%
-              select(-top_importer) %>%
-              left_join(countries_list, by="top_importer_code")
-            
-            names(countries_list) = c("top_exporter","top_exporter_code")
-            
-            origin_dest_year = origin_dest_year %>%
-              mutate(top_exporter_code = substr(top_exporter, 3, 5)) %>%
-              select(-top_exporter) %>%
-              left_join(countries_list, by="top_exporter_code")
-            
-            rm(countries_list)
-            
-            origin_dest_year = origin_dest_year %>%
-              left_join(sitc, by = "sitc") %>%
-              mutate(icon = paste0("d3plus-1.9.8/icons/sitc/sitc_", group_id, ".png")) %>%
-              select(year,origin_id,dest_id,product_name,id,sitc,contains("product_"),contains("export_"),contains("import_"),everything())
-            
-            print("Writing SITC rev.2 (4 characters) CSV file...")
-            
-            origin_dest_year %>%
-              write_csv(paste0(output,".csv")) %>%
-              write_json(paste0(output,".json"))
-            
-            envir = as.environment(1)
-            assign(paste(origin, dest, year, classification, characters, sep = "_"), origin_dest_year, envir = envir)
-            
+            origin_destination_year <- origin_destination_year %>% 
+              mutate(
+                origin_id = "all",
+                destination_id = "all"
+              ) %>%
+              left_join(
+                countries_list,
+                by = c("origin_id" = "country_code")
+              ) %>%
+              rename(origin_name = !!sym("country")) %>%
+              left_join(
+                countries_list, 
+                by = c("destination_id" = "country_code")
+              ) %>%
+              rename(destination_name = !!sym("country"))
+          }
+          
+          # product world-world data ------------------------------------------------
+          
+          world_world_year <- fromJSON(
+            sprintf(
+              "https://atlas.media.mit.edu/%s/export/%s/all/all/show/",
+              classification,
+              year
+            )
+          )
+          
+          world_world_year <- as_tibble(world_world_year[[1]])
+          
+          world_world_year <- world_world_year %>%
+            rename(
+              world_total_export_val = !!sym("export_val"),
+              world_total_import_val = !!sym("import_val")
+            )
+          
+          if (classification == "sitc") {
+            world_world_year <- world_world_year %>% 
+              rename(id = !!sym("sitc_id")) %>% 
+              mutate(
+                sitc = substr(!!sym("id"), 3, 6)
+              ) %>% 
+              select(
+                !!sym("sitc"),
+                contains("pci"),
+                contains("top_")
+              )
           } else {
-            envir = as.environment(1)
-            print("The file you want to download is in the working folder. Reading JSON...")
-            assign(paste(origin, dest, year, classification, characters, sep = "_"), as_tibble(fromJSON(paste0(output,".json"))), envir = envir)
+            if (characters == 4) {
+              world_world_year <- world_world_year %>% 
+                rename(id = !!sym("hs92_id")) %>% 
+                mutate(
+                  hs92 = substr(!!sym("id"), 3, 6)
+                ) %>% 
+                select(
+                  !!sym("hs92"),
+                  contains("pci"),
+                  contains("top_")
+                )
+            } else {
+              world_world_year <- world_world_year %>% 
+                rename(id = !!sym("hs92_id")) %>% 
+                mutate(
+                  hs92 = substr(!!sym("id"), 3, 8)
+                ) %>% 
+                select(
+                  !!sym("hs92"),
+                  contains("pci"),
+                  contains("top_")
+                )
+            }
+          }
+          
+          # product origin-world data -----------------------------------------------
+          
+          origin_world_year <- fromJSON(
+            sprintf(
+              "https://atlas.media.mit.edu/%s/export/%s/%s/all/show/",
+              classification,
+              year,
+              origin
+            )
+          )
+          
+          origin_world_year <- as_tibble(origin_world_year[[1]])
+          
+          if (classification == "sitc") {
+            origin_world_year <- origin_world_year %>%
+              select(!!sym("sitc_id"), contains("_rca")) %>%
+              mutate(sitc = substr(!!sym("sitc_id"), 3, 6)) %>%
+              select(-!!sym("sitc_id"))
+            
+            origin_destination_year <- origin_destination_year %>%
+              left_join(origin_world_year, by = "sitc") %>%
+              left_join(world_world_year, by = "sitc") %>%
+              select(
+                !!!syms(c(
+                  "year",
+                  "origin_id",
+                  "destination_id",
+                  "origin_name",
+                  "destination_name",
+                  "id",
+                  "sitc"
+                )),
+                contains("export_"),
+                contains("import_"),
+                everything()
+              ) %>%
+              select(-!!sym("sitc_id_len"))
+          } else {
+            if (characters == 4) {
+              origin_world_year <- origin_world_year %>%
+                select(!!sym("hs92_id"), contains("_rca")) %>%
+                mutate(hs92 = substr(!!sym("hs92_id"), 3, 6)) %>%
+                select(-!!sym("hs92_id"))
+            } else {
+              origin_world_year <- origin_world_year %>%
+                select(!!sym("hs92_id"), contains("_rca")) %>%
+                mutate(hs92 = substr(!!sym("hs92_id"), 3, 8)) %>%
+                select(-!!sym("hs92_id"))
+            }
+            
+            origin_destination_year <- origin_destination_year %>%
+              left_join(origin_world_year, by = "hs92") %>%
+              left_join(world_world_year, by = "hs92") %>%
+              select(
+                !!!syms(c(
+                  "year",
+                  "origin_id",
+                  "destination_id",
+                  "origin_name",
+                  "destination_name",
+                  "id",
+                  "hs92"
+                )),
+                contains("export_"),
+                contains("import_"),
+                everything()
+              ) %>%
+              select(-!!sym("hs92_id_len"))
+          }
+          
+          rm(world_world_year, origin_world_year)
+          
+          names(countries_list) <-
+            c("top_importer_code", "top_importer")
+          
+          origin_destination_year <- origin_destination_year %>%
+            rename(top_importer_code = !!sym("top_importer")) %>% 
+            mutate(top_importer_code = substr(!!sym("top_importer_code"), 3, 5)) %>%
+            left_join(countries_list, by = "top_importer_code")
+          
+          names(countries_list) <-
+            c("top_exporter_code", "top_exporter")
+          
+          origin_destination_year <- origin_destination_year %>%
+            rename(top_exporter_code = !!sym("top_exporter")) %>% 
+            mutate(top_exporter_code = substr(!!sym("top_exporter_code"), 3, 5)) %>%
+            left_join(countries_list, by = "top_exporter_code")
+          
+          rm(countries_list)
+          
+          if (classification == "sitc") {
+            origin_destination_year <- origin_destination_year %>%
+              left_join(sitc, by = "sitc") %>%
+              select(
+                !!!syms(c(
+                  "year",
+                  "origin_id",
+                  "destination_id",
+                  "origin_name",
+                  "destination_name",
+                  "id",
+                  "sitc",
+                  "product_name"
+                )),
+                contains("product_"),
+                contains("export_"),
+                contains("import_"),
+                everything()
+              )
+          } else {
+            origin_destination_year <- origin_destination_year %>%
+              left_join(hs92, by = "hs92") %>%
+              select(
+                !!!syms(c(
+                  "year",
+                  "origin_id",
+                  "destination_id",
+                  "origin_name",
+                  "destination_name",
+                  "id",
+                  "hs92",
+                  "product_name"
+                )),
+                contains("product_"),
+                contains("export_"),
+                contains("import_"),
+                everything()
+              )
+          }
+          
+          if (write == TRUE) {
+            message("Writing SITC rev.2 (4 characters) CSV file...")
+            
+            origin_destination_year %>%
+              write_csv(paste0(output, ".csv")) %>%
+              write_json(paste0(output, ".json"))
+          }
+          
+          if (wrapper == FALSE) {
+            envir <- as.environment(1)
+            assign(
+              sprintf(
+                "%s_%s_%s_%s_%s",
+                origin,
+                destination,
+                year,
+                classification,
+                characters
+              ),
+              origin_destination_year,
+              envir = envir
+            )
+          } else {
+            return(origin_destination_year)
+          }
+          
+        } else {
+          if (file.exists(paste0(output, ".json"))) {
+            message("The file you want to download is in the working folder. Reading JSON...")
+            if (wrapper == FALSE) {
+              envir <- as.environment(1)
+              assign(
+                sprintf(
+                  "%s_%s_%s_%s_%s",
+                  origin,
+                  destination,
+                  year,
+                  classification,
+                  characters
+                ),
+                as_tibble(fromJSON(paste0(output, ".json"))),
+                envir = envir
+              )
+            }
+          } else {
+            message("The data is in the working space.")
+            return(output)
           }
         }
         
-        if(classification == "hs92") {
-          if(characters == 4 | characters == 6) {
-            if(!file.exists(paste0(output,".csv")) | !file.exists(paste0(output,".json"))) {
-              print(paste0("Processing HS92 (",characters," characters) files..."))
-              
-              origin_dest_year = fromJSON(paste("https://atlas.media.mit.edu/hs92/export", year, origin, dest, "show/", sep = "/"))
-              origin_dest_year = as_tibble(origin_dest_year[[1]])
-              
-              if(origin != "all" & dest != "all") {
-                origin_dest_year = origin_dest_year %>%
-                  filter(hs92_id_len == characters + 2) %>%
-                  mutate(trade_exchange_val = export_val + import_val) %>%
-                  rename(id = hs92_id) %>%
-                  mutate(hs92 = substr(id,3,characters + 2)) %>%
-                  mutate(origin_id = substr(origin_id,3,5),
-                         dest_id = substr(dest_id,3,5)) %>%
-                  left_join(countries_list, by = c("origin_id" = "country_code")) %>%
-                  rename(origin_name = country) %>%
-                  left_join(countries_list, by = c("dest_id" = "country_code")) %>%
-                  rename(dest_name = country)
-              }
-              if(origin == "all" & dest != "all") {
-                origin_dest_year = origin_dest_year %>%
-                  filter(hs92_id_len == characters + 2) %>%
-                  mutate(trade_exchange_val = export_val + import_val) %>%
-                  rename(id = hs92_id) %>%
-                  mutate(hs92 = substr(id,3,characters + 2)) %>%
-                  mutate(origin_id = "all",
-                         dest_id = substr(dest_id,3,5)) %>%
-                  left_join(countries_list, by = c("origin_id" = "country_code")) %>%
-                  rename(origin_name = country) %>%
-                  left_join(countries_list, by = c("dest_id" = "country_code")) %>%
-                  rename(dest_name = country)
-              }
-              if(origin != "all" & dest == "all") {
-                origin_dest_year = origin_dest_year %>%
-                  filter(hs92_id_len == characters + 2) %>%
-                  mutate(trade_exchange_val = export_val + import_val) %>%
-                  rename(id = hs92_id) %>%
-                  mutate(hs92 = substr(id,3,characters + 2)) %>%
-                  mutate(origin_id = substr(origin_id,3,5),
-                         dest_id = "all") %>%
-                  left_join(countries_list, by = c("origin_id" = "country_code")) %>%
-                  rename(origin_name = country) %>%
-                  left_join(countries_list, by = c("dest_id" = "country_code")) %>%
-                  rename(dest_name = country)
-              }
-              if(origin == "all" & dest == "all") {
-                origin_dest_year = origin_dest_year %>%
-                  filter(hs92_id_len == characters + 2) %>%
-                  mutate(trade_exchange_val = export_val + import_val) %>%
-                  rename(id = hs92_id) %>%
-                  mutate(hs92 = substr(id,3,characters + 2)) %>%
-                  mutate(origin_id = "all",
-                         dest_id = "all") %>%
-                  left_join(countries_list, by = c("origin_id" = "country_code")) %>%
-                  rename(origin_name = country) %>%
-                  left_join(countries_list, by = c("dest_id" = "country_code")) %>%
-                  rename(dest_name = country)
-              }
-              
-              world_world_year = fromJSON(paste("https://atlas.media.mit.edu/hs92/export", year, "all/all/show/", sep = "/"))
-              world_world_year = as_tibble(world_world_year[[1]])
-              
-              world_world_year = world_world_year %>%
-                filter(hs92_id_len == characters + 2) %>%
-                rename(id = hs92_id) %>%
-                rename(world_total_export_val = export_val,
-                       world_total_import_val = import_val) %>%
-                mutate(hs92 = substr(id,3,characters + 2)) %>%
-                select(hs92,contains("world_total_"),contains("pci"),contains("top_"))
-              
-              origin_world_year = fromJSON(paste("https://atlas.media.mit.edu/hs92/export", year, origin, "all/show/", sep = "/"))
-              origin_world_year = as_tibble(origin_world_year[[1]])
-              
-              origin_world_year = origin_world_year %>%
-                filter(hs92_id_len == characters + 2) %>%
-                select(export_val,hs92_id) %>%
-                rename(origin_total_export_val = export_val) %>%
-                rename(id = hs92_id) %>%
-                mutate(hs92 = substr(id,3,characters + 2)) %>%
-                select(-id)
-              
-              origin_dest_year = origin_dest_year %>%
-                left_join(world_world_year, by = "hs92") %>%
-                left_join(origin_world_year, by = "hs92") %>%
-                mutate(rca = (origin_total_export_val/sum(origin_total_export_val, na.rm=TRUE))/(world_total_export_val/sum(world_total_export_val, na.rm=TRUE)),
-                       rca = round(rca,3)) %>%
-                select(year,origin_name,dest_name,origin_id,dest_id,id,hs92,contains("export_"),contains("import_"),everything()) %>%
-                select(-hs92_id_len)
-              
-              rm(world_world_year,origin_world_year)
-              
-              names(countries_list) = c("top_importer","top_importer_code")
-              
-              origin_dest_year = origin_dest_year %>%
-                mutate(top_importer_code = substr(top_importer, 3, 5)) %>%
-                select(-top_importer) %>%
-                left_join(countries_list, by="top_importer_code")
-              
-              names(countries_list) = c("top_exporter","top_exporter_code")
-              
-              origin_dest_year = origin_dest_year %>%
-                mutate(top_exporter_code = substr(top_exporter, 3, 5)) %>%
-                select(-top_exporter) %>%
-                left_join(countries_list, by="top_exporter_code")
-              
-              rm(countries_list)
-              
-              hs92 = hs92 %>%
-                filter(nchar(hs92) == characters)
-              
-              origin_dest_year = origin_dest_year %>%
-                left_join(hs92, by = "hs92") %>%
-                mutate(icon = paste0("d3plus-1.9.8/icons/hs/hs_", group_id, ".png")) %>%
-                select(year,origin_id,dest_id,product_name,id,hs92,contains("product_"),contains("export_"),contains("import_"),everything())
-              
-              rm(hs92)
-              
-              print("Writing HS rev.92 (4 characters) CSV and JSON files...")
-              
-              origin_dest_year %>%
-                write_csv(paste0(output,".csv")) %>%
-                write_json(paste0(output,".json"))
-              
-              envir = as.environment(1)
-              assign(paste(origin, dest, year, classification, characters, sep = "_"), origin_dest_year, envir = envir)
-              
-            } else {
-              envir = as.environment(1)
-              print("The file you want to download is in the working folder. Reading JSON...")
-              assign(paste(origin, dest, year, classification, characters, sep = "_"), as_tibble(fromJSON(paste0(output,".json"))), envir = envir)
-            }
-          }
-        }
       } else {
-        print('Error. The trade classifications can be "1" (HS92 4 characters) or "3" (HS92 6 characters) for the year 1995 and going or "2" (SITC rev.2 4 characters) for the year 1962 and ongoing.')
-        stop()
+        stop('Check classification.')
       }
     }
   }
