@@ -2,8 +2,8 @@ Package: oec
 Type: Package
 Title: Observatory of Economic Complexity API Wrapper and Utility
         Program
-Version: 2.6.7
-Date: 2018-06-08
+Version: 2.7.8
+Date: 2018-06-11
 Authors@R: c(
   person("Mauricio", "Vargas S.", role = c("aut", "cre", "cph"), email = "oec@media.mit.edu"),
   person("Manuel", "Aristaran", role = c("ctb")),
@@ -20,10 +20,10 @@ Description: Access The Observatory of Economic Complexity API from R to downloa
 License: MIT + file LICENSE
 LazyData: TRUE
 Depends: R (>= 3.2)
-Imports: rlang, magrittr, dplyr, purrr, curl, jsonlite, readr
+Imports: rlang, magrittr, dplyr, stringr, purrr, curl, jsonlite, readr
 RoxygenNote: 6.0.1
 NeedsCompilation: no
-Packaged: 2018-05-08 18:30:59 UTC; pacha
+Packaged: 2018-05-11 04:32:53 UTC; pacha
 Author: Mauricio Vargas S. [aut, cre, cph],
   Manuel Aristaran [ctb],
   Pablo Paladino [ctb],
@@ -32,4 +32,4 @@ Author: Mauricio Vargas S. [aut, cre, cph],
   MIT Media Lab [dtc],
   Datawheel [fnd]
 Repository: CRAN
-Date/Publication: 2018-05-08 19:06:13 UTC
+Date/Publication: 2018-05-11 15:31:35 UTC
